@@ -7,7 +7,6 @@ IFS=$'\n\t'
 
 # Set working directory to dir of this file
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)" || return
-echo "$(pwd)"
 
 # Load default env config
 source .env
@@ -17,7 +16,7 @@ source lib/report_helpers.sh
 
 # Sanity checks on passed config file
 if [ ! -r "$1" ]; then
-  error_msg="Error: $1 is not readable file."
+  error_msg="$1 is not readable file."
 
   log_error_with_tee "$error_msg"
   exit 1
@@ -26,7 +25,7 @@ fi
 if [[ "$1" =~ .*\.report\.cfg ]]; then
   config_file=$1
 else
-  error_msg="Error: $1 is not a report config file."
+  error_msg="$1 is not a report config file."
   log_error_with_tee "$error_msg"
   exit 1
 fi
@@ -35,6 +34,9 @@ fi
 # TODO: replace source config file with parsing
 source "$config_file"
 
+# create script name from config file name
+script_name=$(basename "$config_file")
+script_name=${script_name%.*}
 
 # Test that all necessary variables are set
 # and also check that global options are still present
@@ -46,7 +48,7 @@ config_options=( EMAIL_SUBJECT EMAIL_FROM EMAIL_RECIPIENTS
 for opt_name in ${config_options[@]}
 do
   if [ -z ${!opt_name} ]; then
-    error_msg="Error: $1 Missing $opt_name definition or is empty."
+    error_msg="$script_name : $1 Missing $opt_name definition or is empty."
     log_error_with_tee "$error_msg"
     exit 1
   fi
@@ -54,20 +56,63 @@ done
 
 # Unsure script_path is readable file
 if [ ! -r "$SCRIPT_PATH" ]; then
-  error_msg="Error: $SCRIPT_PATH is not readable file."
+  error_msg="$script_name : $SCRIPT_PATH is not readable file."
   log_error_with_tee "$error_msg"
   exit 1
 fi
 
-script_name=$(basename "$config_file")
+report_path=$(build_report_path "$script_name" "$REPORTS_DIR")
+bucket_report_path=$(build_bucket_report_path "$report_path")
 
-echo $script_name
-# log_info "$script_name initialised"
-log_info_with_tee "$script_name initialised"
-# process_report $script_path
-# log_state $script_path 'generated'
-# upload_report $report_path
-# log_state $script_path 'uploaded'
-# build_email_body "$download_link" "$expire_time_human" "$reply_to"
-# send_email "$email_subject" "$email_body" "$recipients"
-# log_state $script_path 'sent'
+log_info_with_tee "$script_name : Initialised"
+
+generate_report "$SCRIPT_PATH" "$report_path"
+
+if [ ! "$?" -eq "0" ]; then
+  log_error_with_tee "$script_name : Something went wrong with generate_report $SCRIPT_PATH $REPORTS_DIR"
+  exit 1
+fi
+
+if [ ! -r "$report_path" ]; then
+  error_msg="$script_name : $report_path was not created."
+  log_error_with_tee "$error_msg"
+  exit 1
+elif [ ! -s "$report_path" ]; then
+  error_msg="$script_name : $report_path is empty."
+  log_error_with_tee "$error_msg"
+  exit 1
+fi
+
+log_info_with_tee "$script_name : Generated"
+
+upload_report "$report_path" "$bucket_report_path"
+
+if [ ! "$?" -eq "0" ]; then
+  log_error_with_tee "$script_name : Something went wrong with upload_report $report_path"
+  exit 1
+fi
+
+log_info_with_tee "$script_name : Uploaded"
+
+download_url=$(generate_download_url "$bucket_report_path")
+
+if [ ! "$?" -eq "0" ]; then
+  log_error_with_tee "$script_name : Something went wrong with generating url for $bucket_report_path"
+  exit 1
+fi
+
+log_info_with_tee "$script_name : Url generated"
+
+email_body=$(build_email_body "$download_url")
+email_subject="$EMAIL_SUBJECT - $(date +"%m.%d.%Y")"
+email_recipients="$EMAIL_RECIPIENTS"
+email_from="$EMAIL_FROM"
+email=$(build_email "$email_subject" "$email_body" "$email_recipients" "$email_from")
+email_path=$(build_email_path "$report_path")
+save_email "$email" "$email_path"
+
+log_info_with_tee "$script_name : Email generated"
+
+send_email "$email_path" "$email_recipients"
+
+log_info_with_tee "$script_name : Email Sent"
