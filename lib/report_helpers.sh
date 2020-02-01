@@ -30,7 +30,8 @@ function process_report {
   report_path=$report_dir/${file_prefix}_$(date +"%m-%d-%Y_%H-%M").csv
 
   mkdir -p $report_dir
-  psql $DATABASE_READONLY_URL -f $script_path > $report_path
+  echo "$DATABASE_READONLY_URL -f $script_path > $report_path"
+  echo $DATABASE_READONLY_URL -f $script_path > $report_path
 }
 
 
@@ -49,4 +50,43 @@ function log_state {
   log_status=$2
   script_name=$(basename -- "$script_path")
   printf "%s %s %s\n" $(date +"%Y-%m-%d_%H-%M-%S") "$script_name" "$log_status" >> log.txt
+}
+
+function log_info {
+  local message=$1
+  local type='INFO'
+  # printf "%s %s: %s\n" $(date +"%Y-%m-%d %H:%M:%S") "$type" "$message" >> "$LOG_FILE"
+  log_message "$message" "$type"
+}
+
+function log_error {
+  local message=$1
+  local type='ERROR'
+  log_message "$message" "$type"
+}
+
+function log_message {
+  local message=$1
+  local type=$2
+  printf "%s %s: %s\n" $(date +"%Y-%m-%d %H:%M:%S") "$type" "$message" >> "$LOG_FILE"
+}
+
+
+function log_info_with_tee {
+  local message=$1
+  local type='INFO'
+  log_message_with_tee "$message" "$type"
+}
+
+function log_error_with_tee {
+  local message=$1
+  local type='ERROR'
+  log_message_with_tee "$message" "$type"
+}
+
+function log_message_with_tee {
+  local message=$1
+  local type=$2
+  local timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+  printf "%s %s: %s\n" "$timestamp" "$type" "$message" | tee -a "$LOG_FILE"
 }
