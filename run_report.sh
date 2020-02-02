@@ -15,10 +15,13 @@ source .env
 source lib/report_helpers.sh
 
 # Sanity checks on passed config file
-if [ ! -r "$1" ]; then
+# f - regular file
+# r - read permission
+# s - size greater than zero
+if [ ! -f "$1" ] || [ ! -r "$1" ] || [ ! -s "$1" ]; then
   error_msg="$1 is not readable file."
 
-  log_error_with_tee "$error_msg"
+  log_error "$error_msg"
   exit 1
 fi
 
@@ -26,9 +29,10 @@ if [[ "$1" =~ .*\.report\.cfg ]]; then
   config_file=$1
 else
   error_msg="$1 is not a report config file."
-  log_error_with_tee "$error_msg"
+  log_error "$error_msg"
   exit 1
 fi
+
 
 # Load script specific config and override defaults
 # TODO: replace source config file with parsing
@@ -49,7 +53,7 @@ for opt_name in ${config_options[@]}
 do
   if [ -z ${!opt_name} ]; then
     error_msg="$script_name : $1 Missing $opt_name definition or is empty."
-    log_error_with_tee "$error_msg"
+    log_error "$error_msg"
     exit 1
   fi
 done
@@ -57,51 +61,51 @@ done
 # Unsure script_path is readable file
 if [ ! -r "$SCRIPT_PATH" ]; then
   error_msg="$script_name : $SCRIPT_PATH is not readable file."
-  log_error_with_tee "$error_msg"
+  log_error "$error_msg"
   exit 1
 fi
 
 report_path=$(build_report_path "$script_name" "$REPORTS_DIR")
 bucket_report_path=$(build_bucket_report_path "$report_path")
 
-log_info_with_tee "$script_name : Initialised"
+log_info "$script_name : Initialised"
 
 generate_report "$SCRIPT_PATH" "$report_path"
 
 if [ ! "$?" -eq "0" ]; then
-  log_error_with_tee "$script_name : Something went wrong with generate_report $SCRIPT_PATH $REPORTS_DIR"
+  log_error "$script_name : Something went wrong with generate_report $SCRIPT_PATH $REPORTS_DIR"
   exit 1
 fi
 
 if [ ! -r "$report_path" ]; then
   error_msg="$script_name : $report_path was not created."
-  log_error_with_tee "$error_msg"
+  log_error "$error_msg"
   exit 1
 elif [ ! -s "$report_path" ]; then
   error_msg="$script_name : $report_path is empty."
-  log_error_with_tee "$error_msg"
+  log_error "$error_msg"
   exit 1
 fi
 
-log_info_with_tee "$script_name : Generated"
+log_info "$script_name : Generated"
 
 upload_report "$report_path" "$bucket_report_path"
 
 if [ ! "$?" -eq "0" ]; then
-  log_error_with_tee "$script_name : Something went wrong with upload_report $report_path"
+  log_error "$script_name : Something went wrong with upload_report $report_path"
   exit 1
 fi
 
-log_info_with_tee "$script_name : Uploaded"
+log_info "$script_name : Uploaded"
 
 download_url=$(generate_download_url "$bucket_report_path")
 
 if [ ! "$?" -eq "0" ]; then
-  log_error_with_tee "$script_name : Something went wrong with generating url for $bucket_report_path"
+  log_error "$script_name : Something went wrong with generating url for $bucket_report_path"
   exit 1
 fi
 
-log_info_with_tee "$script_name : Url generated"
+log_info "$script_name : Url generated"
 
 email_body=$(build_email_body "$download_url")
 email_subject="$EMAIL_SUBJECT - $(date +"%m.%d.%Y")"
@@ -110,9 +114,10 @@ email_from="$EMAIL_FROM"
 email=$(build_email "$email_subject" "$email_body" "$email_recipients" "$email_from")
 email_path=$(build_email_path "$report_path")
 save_email "$email" "$email_path"
+log_info "$script_name : $email_path"
 
-log_info_with_tee "$script_name : Email generated"
+log_info "$script_name : Email generated"
 
 send_email "$email_path" "$email_recipients"
 
-log_info_with_tee "$script_name : Email Sent"
+log_info "$script_name : Email Sent"

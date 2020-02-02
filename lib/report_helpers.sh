@@ -12,7 +12,9 @@ function build_email {
 function build_email_path {
   local report_path=$1
   local email_dir=$EMAILS_DIR/$(date +"%m-%d-%y")
-  local email_path=$email_dir/$(basename -- "$report_path")
+  local filename=$(basename "$report_path")
+  local filename=${filename%.*}.txt
+  local email_path=$email_dir/$filename
 
   mkdir -p $email_dir
   echo $email_path
@@ -86,7 +88,6 @@ function log_state {
 function log_info {
   local message=$1
   local type='INFO'
-  # printf "%s %s: %s\n" $(date +"%Y-%m-%d %H:%M:%S") "$type" "$message" >> "$LOG_FILE"
   log_message "$message" "$type"
 }
 
@@ -99,25 +100,11 @@ function log_error {
 function log_message {
   local message=$1
   local type=$2
-  printf "%s %s: %s\n" $(date +"%Y-%m-%d %H:%M:%S") "$type" "$message" >> "$LOG_FILE"
-}
-
-
-function log_info_with_tee {
-  local message=$1
-  local type='INFO'
-  log_message_with_tee "$message" "$type"
-}
-
-function log_error_with_tee {
-  local message=$1
-  local type='ERROR'
-  log_message_with_tee "$message" "$type"
-}
-
-function log_message_with_tee {
-  local message=$1
-  local type=$2
   local timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-  printf "%s %s: %s\n" "$timestamp" "$type" "$message" | tee -a "$LOG_FILE"
+
+  if [ "$VERBOSE" = "0" ] && [ "$DEBUG_SCRIPT" = "0" ]; then
+    printf "%s %s: %s\n" "$timestamp" "$type" "$message" >> "$LOG_FILE"
+  else
+    printf "%s %s: %s\n" "$timestamp" "$type" "$message" | tee -a "$LOG_FILE"
+  fi
 }
