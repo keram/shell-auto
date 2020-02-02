@@ -1,12 +1,12 @@
 #!/bin/bash
 
 function build_email {
-  local email_recipients=$1
-  local email_from=$2
-  local email_subject=$3
-  local email_body=$4
+  local email_subject=$1
+  local email_body=$2
+  local email_to=$3
+  local email_from=$4
 
-  printf "To: %s\nFrom: %s\nSubject: %s\n\n%s\n" $email_recipients "$email_from" "$email_subject" "$email_body"
+  printf "To: %s\nFrom: %s\nSubject: %s\n\n%s\n" "$email_to" "$email_from" "$email_subject" "$email_body"
 }
 
 function build_email_path {
@@ -36,8 +36,9 @@ function send_email {
 
 function build_email_body {
   local download_url=$1
+  local expire_in=$2
   local email_body=$(<report_email_body_template.txt)
-  printf "$email_body" "$download_url"
+  printf "$email_body" "$download_url" "$expire_in"
 }
 
 function generate_report {

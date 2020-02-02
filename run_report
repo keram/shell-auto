@@ -107,11 +107,12 @@ fi
 
 log_info "$script_name : Url generated"
 
-email_body=$(build_email_body "$download_url")
+email_body=$(build_email_body "$download_url" "$EXPIRE_TIME_HUMAN")
 email_subject="$EMAIL_SUBJECT - $(date +"%m.%d.%Y")"
 email_recipients="$EMAIL_RECIPIENTS"
 email_from="$EMAIL_FROM"
 email=$(build_email "$email_subject" "$email_body" "$email_recipients" "$email_from")
+
 email_path=$(build_email_path "$report_path")
 save_email "$email" "$email_path"
 log_info "$script_name : $email_path"
