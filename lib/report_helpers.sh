@@ -24,13 +24,14 @@ function save_email {
   local email=$1
   local email_path=$2
 
-  echo $email > $email_path
+  echo "$email" > "$email_path"
 }
 
 function send_email {
   email_path=$1
   email_recipients=$2
   # cat $email_path | msmtp -a reports "$email_recipients"
+  cat "$email_path"
 }
 
 function build_email_body {
@@ -43,9 +44,12 @@ function generate_report {
   local script_path="$1"
   local report_path="$2"
   # echo "$DATABASE_READONLY_URL -f $script_path > $report_path"
-  # psql $DATABASE_READONLY_URL -f $script_path > $report_path
-  touch $report_path
-  echo "bla" > $report_path
+  # for some reason -f does not work on win
+  if [ "$WINDOWS_OS" = "1" ]; then
+    psql "$DATABASE_URL" < "$script_path" > "$report_path"
+  else
+    psql "$DATABASE_URL" -f "$script_path" > "$report_path"
+  fi
 }
 
 function build_report_path {
@@ -76,13 +80,6 @@ function generate_download_url {
   # download_link=$(aws s3 presign $bucket_report_path --expires-in $expire_time_in_seconds)
 
   echo "https://s3.eu-west-2.amazonaws.com/support.reports.test/foo.test"
-}
-
-function log_state {
-  script_path=$1
-  log_status=$2
-  script_name=$(basename -- "$script_path")
-  printf "%s %s %s\n" $(date +"%Y-%m-%d_%H-%M-%S") "$script_name" "$log_status" >> log.txt
 }
 
 function log_info {
