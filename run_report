@@ -89,16 +89,15 @@ fi
 
 log_info "$script_name : Generated"
 
-upload=$(upload_report "$report_path" "$bucket_report_path")
+upload_report "$report_path" "$bucket_report_path"
 
 if [ ! "$?" -eq "0" ]; then
   log_error "$script_name : Something went wrong with upload_report $report_path"
 
-  log_error "$script_name : $upload"
   exit 1
 fi
 
-log_info "$script_name : $upload"
+# log_info "$script_name : $upload"
 
 log_info "$script_name : Uploaded"
 

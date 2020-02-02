@@ -85,7 +85,7 @@ function upload_report {
   # The maximum socket connect time in seconds. If the value is set  to  0,
   # the socket connect will be blocking and not timeout.
   # --cli-read-timeout 1 --cli-connect-timeout 1
-  aws s3 cp $report_path $bucket_report_path
+  aws s3 cp "$report_path" "$bucket_report_path"
 }
 
 # TODO: trap aws failure and log to file
@@ -93,7 +93,7 @@ function generate_download_url {
   local bucket_report_path=$1
   local expire_time_in_seconds=$2
 
-  aws s3 presign $bucket_report_path --expires-in $expire_time_in_seconds
+  aws s3 presign "$bucket_report_path" --expires-in "$expire_time_in_seconds"
 }
 
 function log_info {
@@ -125,10 +125,10 @@ function log_message {
 # eshell mocks
 if [ $(uname) = "MINGW64_NT-10.0" ]; then
   function aws {
-    echo "aws $1 $2"
+    log_info "aws $1 $2"
   }
 
   function msmtp {
-    echo "msmtp $1 $2 $3"
+    log_info "msmtp $1 $2 $3"
   }
 fi
