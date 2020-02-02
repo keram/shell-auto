@@ -89,16 +89,18 @@ fi
 
 log_info "$script_name : Generated"
 
-upload_report "$report_path" "$bucket_report_path"
+upload=$(upload_report "$report_path" "$bucket_report_path")
 
 if [ ! "$?" -eq "0" ]; then
   log_error "$script_name : Something went wrong with upload_report $report_path"
   exit 1
 fi
 
+log_info "$script_name : $upload"
+
 log_info "$script_name : Uploaded"
 
-download_url=$(generate_download_url "$bucket_report_path")
+download_url=$(generate_download_url "$bucket_report_path" "$EXPIRE_TIME_IN_SECONDS")
 
 if [ ! "$?" -eq "0" ]; then
   log_error "$script_name : Something went wrong with generating url for $bucket_report_path"
@@ -113,12 +115,21 @@ email_recipients="$EMAIL_RECIPIENTS"
 email_from="$EMAIL_FROM"
 email=$(build_email "$email_subject" "$email_body" "$email_recipients" "$email_from")
 
+if [ ! "$?" -eq "0" ]; then
+  log_error "$script_name : Something went wrong when building email"
+  exit 1
+fi
+
 email_path=$(build_email_path "$report_path")
 save_email "$email" "$email_path"
-log_info "$script_name : $email_path"
 
 log_info "$script_name : Email generated"
 
 send_email "$email_path" "$email_recipients"
+
+if [ ! "$?" -eq "0" ]; then
+  log_error "$script_name : Something went wrong when sending email"
+  exit 1
+fi
 
 log_info "$script_name : Email Sent"

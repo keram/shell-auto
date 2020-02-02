@@ -28,10 +28,9 @@ function save_email {
 }
 
 function send_email {
-  email_path=$1
-  email_recipients=$2
-  # cat $email_path | msmtp -a reports "$email_recipients"
-  cat "$email_path"
+  local email_path=$1
+  local email_recipients=$2
+  cat $email_path | msmtp -a reports "$email_recipients"
 }
 
 function build_email_body {
@@ -46,7 +45,9 @@ function generate_report {
   local report_path="$2"
   # echo "$DATABASE_READONLY_URL -f $script_path > $report_path"
   # for some reason -f does not work on win
-  if [ "$WINDOWS_OS" = "1" ]; then
+  # and uname test for eshell in emacs
+  # TODO cleanup
+  if [ "$WINDOWS_OS" = "1" ] || [ $(uname) = "MINGW64_NT-10.0" ]; then
     psql "$DATABASE_URL" < "$script_path" > "$report_path"
   else
     psql "$DATABASE_URL" -f "$script_path" > "$report_path"
@@ -72,15 +73,14 @@ function upload_report {
   local report_path=$1
   local bucket_report_path=$2
 
-  # aws s3 cp $report_path $bucket_report_path
+  aws s3 cp $report_path $bucket_report_path
 }
 
 function generate_download_url {
   local bucket_report_path=$1
+  local expire_time_in_seconds=$2
 
-  # download_link=$(aws s3 presign $bucket_report_path --expires-in $expire_time_in_seconds)
-
-  echo "https://s3.eu-west-2.amazonaws.com/support.reports.test/foo.test"
+  aws s3 presign $bucket_report_path --expires-in $expire_time_in_seconds
 }
 
 function log_info {
@@ -106,3 +106,14 @@ function log_message {
     printf "%s %s: %s\n" "$timestamp" "$type" "$message" | tee -a "$LOG_FILE"
   fi
 }
+
+# eshell mocks
+if [ $(uname) = "MINGW64_NT-10.0" ]; then
+  function aws {
+    echo "aws $1 $2"
+  }
+
+  function msmtp {
+    echo "msmtp $1 $2 $3"
+  }
+fi
