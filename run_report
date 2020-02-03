@@ -14,33 +14,30 @@ source .env
 # Load default env config
 source lib/report_helpers.sh
 
+config_file=$1
+
+script_name=$(basename "$config_file")
+script_name=${script_name%.*}
+
 # Sanity checks on passed config file
 # f - regular file
 # r - read permission
 # s - size greater than zero
-if [ ! -f "$1" ] || [ ! -r "$1" ] || [ ! -s "$1" ]; then
-  error_msg="$1 is not readable file."
-
-  log_error "$error_msg"
+if [ ! -f "$config_file" ] ||
+     [ ! -r "$config_file" ] ||
+     [ ! -s "$config_file" ]; then
+  log_error "$script_name : $config_file is not readable file."
   exit 1
 fi
 
-if [[ "$1" =~ .*\.report\.cfg ]]; then
-  config_file=$1
-else
-  error_msg="$1 is not a report config file."
-  log_error "$error_msg"
+if [[ ! "$config_file" =~ .*\.report\.cfg ]]; then
+  log_error "$script_name : $config_file is not a report config file."
   exit 1
 fi
-
 
 # Load script specific config and override defaults
 # TODO: replace source config file with parsing
 source "$config_file"
-
-# create script name from config file name
-script_name=$(basename "$config_file")
-script_name=${script_name%.*}
 
 # Test that all necessary variables are set
 # and also check that global options are still present
@@ -52,16 +49,14 @@ config_options=( EMAIL_SUBJECT EMAIL_FROM EMAIL_RECIPIENTS
 for opt_name in ${config_options[@]}
 do
   if [ -z ${!opt_name} ]; then
-    error_msg="$script_name : $1 Missing $opt_name definition or is empty."
-    log_error "$error_msg"
+    log_error "$script_name : Missing $opt_name definition or is empty."
     exit 1
   fi
 done
 
-# Unsure script_path is readable file
+# Ensure script_path is readable file
 if [ ! -r "$SCRIPT_PATH" ]; then
-  error_msg="$script_name : $SCRIPT_PATH is not readable file."
-  log_error "$error_msg"
+  log_error "$script_name : $SCRIPT_PATH is not readable file."
   exit 1
 fi
 
@@ -78,12 +73,10 @@ if [ ! "$?" -eq "0" ]; then
 fi
 
 if [ ! -r "$report_path" ]; then
-  error_msg="$script_name : $report_path was not created."
-  log_error "$error_msg"
+  log_error "$script_name : $report_path was not created."
   exit 1
 elif [ ! -s "$report_path" ]; then
-  error_msg="$script_name : $report_path is empty."
-  log_error "$error_msg"
+  log_error "$script_name : $report_path is empty."
   exit 1
 fi
 
@@ -96,8 +89,6 @@ if [ ! "$?" -eq "0" ]; then
 
   exit 1
 fi
-
-# log_info "$script_name : $upload"
 
 log_info "$script_name : Uploaded"
 
