@@ -65,8 +65,13 @@ bucket_report_path=$(build_bucket_report_path "$report_path")
 
 log_info "$script_name : Initialised"
 
-generate_report "$SCRIPT_PATH" "$report_path"
+# 2>&1 - send stderr to stdout
+# | tee -a file - send stdout to tee print on console and log into a file
+generate_report "$SCRIPT_PATH" "$report_path" 2>&1 | tee -a "$LOG_FILE"
 
+# `set -e` causes the script exit on error before it reaches this condition
+# and we log the error with ` 2>&1 | tee -a "$LOG_FILE"`
+# but keeping as good practice
 if [ ! "$?" -eq "0" ]; then
   log_error "$script_name : Something went wrong with generate_report $SCRIPT_PATH $REPORTS_DIR"
   exit 1
@@ -82,7 +87,7 @@ fi
 
 log_info "$script_name : Generated"
 
-upload_report "$report_path" "$bucket_report_path"
+upload_report "$report_path" "$bucket_report_path" 2>&1 | tee -a "$LOG_FILE"
 
 if [ ! "$?" -eq "0" ]; then
   log_error "$script_name : Something went wrong with upload_report $report_path"
@@ -117,7 +122,7 @@ save_email "$email" "$email_path"
 
 log_info "$script_name : Email generated"
 
-send_email "$email_path" "$email_recipients"
+send_email "$email_path" "$email_recipients" 2>&1 | tee -a "$LOG_FILE"
 
 if [ ! "$?" -eq "0" ]; then
   log_error "$script_name : Something went wrong when sending email"
