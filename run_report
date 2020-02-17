@@ -19,6 +19,8 @@ config_file=$1
 script_name=$(basename "$config_file")
 script_name=${script_name%.*}
 
+config_dir=$(dirname "$config_file")
+
 # Sanity checks on passed config file
 # f - regular file
 # r - read permission
@@ -53,6 +55,12 @@ do
     exit 1
   fi
 done
+
+# If script path does not start with /
+# prepend path of config to search it relatively to it
+if [ ! "${SCRIPT_PATH:0:1}" = "/" ]; then
+  SCRIPT_PATH="$config_dir/$SCRIPT_PATH"
+fi
 
 # Ensure script_path is readable file
 if [ ! -r "$SCRIPT_PATH" ]; then
