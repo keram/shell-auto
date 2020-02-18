@@ -69,7 +69,7 @@ function build_report_path {
 function build_bucket_report_path {
   local report_path=$1
 
-  echo "s3://$REPORTS_S3_BUCKET/$(date +"%m-%d-%Y")/$(basename -- "$report_path")"
+  echo "s3://$REPORTS_AWS_S3_BUCKET/$(date +"%m-%d-%Y")/$(basename -- "$report_path")"
 }
 
 # TODO: trap aws failure and log to file

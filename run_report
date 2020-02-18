@@ -46,7 +46,7 @@ source "$config_file"
 config_options=( EMAIL_SUBJECT EMAIL_FROM EMAIL_RECIPIENTS
                  EXPIRE_TIME_IN_SECONDS EXPIRE_TIME_HUMAN
                  SCRIPT_PATH
-                 LOG_FILE )
+                 LOG_FILE REPORTS_AWS_S3_BUCKET )
 
 for opt_name in ${config_options[@]}
 do
