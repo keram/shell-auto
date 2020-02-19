@@ -59,7 +59,7 @@ function generate_report {
 function build_report_path {
   local script_name="$1"
   local report_dir="$2/$(date +"%d-%m-%y")"
-  local report_file_name="script_name_$(date +"%d-%m-%Y_%H-%M").csv"
+  local report_file_name="${script_name}_$(date +"%d-%m-%Y_%H-%M").csv"
   local report_path="$report_dir/$report_file_name"
 
   mkdir -p "$report_dir"
