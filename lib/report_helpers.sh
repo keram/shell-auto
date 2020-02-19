@@ -85,7 +85,8 @@ function upload_report {
   # The maximum socket connect time in seconds. If the value is set  to  0,
   # the socket connect will be blocking and not timeout.
   # --cli-read-timeout 1 --cli-connect-timeout 1
-  aws s3 cp "$report_path" "$bucket_report_path"
+  res=$(aws s3 cp "$report_path" "$bucket_report_path" 2>&1)
+  echo "$res"
 }
 
 # TODO: trap aws failure and log to file

@@ -98,11 +98,13 @@ fi
 log_info "$script_name : Generated"
 
 # we can not redirect stout or stderror as aws sends out to stdout
-upload_report "$report_path" "$bucket_report_path"
+upload_result=$(upload_report "$report_path" "$bucket_report_path")
 
 if [ ! "$?" -eq "0" ]; then
   log_error "$script_name : Something went wrong with upload_report $report_path"
-
+  exit 1
+elif [ ${upload_result:0:13} = "upload failed" ]; then
+  log_error "$script_name : $upload_result"
   exit 1
 fi
 
