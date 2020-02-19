@@ -14,6 +14,8 @@ source .env
 # Load default env config
 source lib/report_helpers.sh
 
+trap log_bad_exits err exit
+
 config_file=$1
 
 script_name=$(basename "$config_file")
@@ -99,10 +101,10 @@ log_info "$script_name : Generated"
 
 # we can not redirect stout or stderror as aws sends out to stdout
 upload_report "$report_path" "$bucket_report_path"
+# 2>&1 | aws_upload_result_handler | tee -a "$LOG_FILE"
 
 if [ ! "$?" -eq "0" ]; then
   log_error "$script_name : Something went wrong with upload_report $report_path"
-
   exit 1
 fi
 

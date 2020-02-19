@@ -96,6 +96,10 @@ function generate_download_url {
   aws s3 presign "$bucket_report_path" --expires-in "$expire_time_in_seconds"
 }
 
+function aws_upload_result_handler {
+  awk '{ print strftime("%Y-%m-%d %H:%M:%S ERROR:"), $0; fflush(); }'
+}
+
 function log_info {
   local message=$1
   local type='INFO'
@@ -122,10 +126,19 @@ function log_message {
   fi
 }
 
+function log_bad_exits()
+{
+  local exit_code=$?
+  if [ ! "$exit_code" -eq "0" ]; then
+    log_error "$script_name : [$exit_code] Something went wrong. Please investigate."
+  fi
+}
+
 # eshell mocks
 if [ $(uname) = "MINGW64_NT-10.0" ]; then
   function aws {
-    log_info "aws $1 $2"
+    echo "upload failed: some error message"
+    return 1
   }
 
   function msmtp {
