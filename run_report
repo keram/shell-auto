@@ -14,7 +14,7 @@ source .env
 # Load default env config
 source lib/report_helpers.sh
 
-trap log_bad_exits err exit
+trap log_bad_exits exit
 
 config_file=$1
 
