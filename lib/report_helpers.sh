@@ -45,14 +45,23 @@ function build_email_body {
 function generate_report {
   local script_path="$1"
   local report_path="$2"
+  local db_url=$DATABASE_URL
+
+  if [ ! ${DB_PREFIX} = '' ]; then
+    # TODO log info is reported as error from function
+    # log_info "With db prefix ${DB_PREFIX}"
+    # TODO lower to uppercase
+    local db_url_name="${DB_PREFIX}_DATABASE_URL"
+    local db_url="${!db_url_name}"
+  fi
 
   # for some reason -f does not work on win
   # and uname test for eshell in emacs
   # TODO cleanup
   if [ $(uname) = "MINGW64_NT-10.0" ]; then
-    psql "$DATABASE_URL" < "$script_path" > "$report_path"
+    psql "$db_url" < "$script_path" > "$report_path"
   else
-    psql "$DATABASE_URL" -f "$script_path" > "$report_path"
+    psql "$db_url" -f "$script_path" > "$report_path"
   fi
 }
 
